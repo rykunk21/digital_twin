@@ -1,0 +1,35 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: surrealdb
+    command: start --log debug --user root --pass root --bind 0.0.0.0:8080
+    volumes:
+      - surreal_data:/data 
+    networks:
+      - backend_network
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "surrealdb:8080"
+      DATABASE_NAME: "TEST"
+    env_file:
+      .env/.env.${ENV}
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: cargo run -p backend --release
+    ports:
+      - "8000:8000"
+      - "80:80"
+    networks:
+      - backend_network
+
+volumes:
+  surreal_data:
+
+networks:
+  backend_network:
+    driver: bridge
