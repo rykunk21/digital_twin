@@ -1,34 +1,38 @@
-FROM rust:latest as builder
+# ===== Builder stage =====
+FROM rust:latest AS builder
 
-# Set the working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the backend and frontend files into the container
-COPY . . 
+# Copy backend and frontend source files
+COPY . .
 
-# Install any dependencies and build the project
+# Install dependencies needed for building
 RUN apt-get update && apt-get install -y \
     build-essential \
     libssl-dev \
     pkg-config \
+    musl-tools \
     && rm -rf /var/lib/apt/lists/*
 
-RUN rustup update
-RUN cargo build --release -p backend 
-# Set up the final runtime image
+# Add MUSL target
+RUN rustup target add x86_64-unknown-linux-musl
 
-FROM debian:bullseye-slim
+# Build backend for MUSL
+RUN cargo build --release --target x86_64-unknown-linux-musl -p backend
 
-# Install any runtime dependencies needed for the app (e.g., for serving frontend files)
-RUN apt-get update && apt-get install -y \
-    libssl1.1 \
-    && rm -rf /var/lib/apt/lists/*
+# ===== Runtime stage =====
+FROM debian:bookworm-slim
 
-# Copy the built binary and frontend files from the builder image
+# Set working directory
 WORKDIR /app
-COPY --from=builder /app/target/release/backend ./backend
+
+# Copy the statically-linked MUSL binary from builder
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/backend ./backend
+
+# Copy frontend assets
 COPY --from=builder /app/frontend/dist ./frontend/dist
 
 # Run the backend binary
-CMD ["./backend/backend"]
+CMD ["./backend"]
 

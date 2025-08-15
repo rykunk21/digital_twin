@@ -25,7 +25,7 @@ async fn rocket() -> _ {
 
             ..Config::default()
         })
-        .mount("/", FileServer::from(relative!("../frontend/dist")))
+        .mount("/", FileServer::from("./frontend/dist"))
         .mount(
             "/api",
             routes![routes::create, routes::read, routes::update, routes::delete],
