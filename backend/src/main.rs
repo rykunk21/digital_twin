@@ -2,10 +2,7 @@
 extern crate rocket;
 use std::net::{IpAddr, Ipv4Addr};
 
-use rocket::{
-    fs::{relative, FileServer},
-    Config,
-};
+use rocket::{fs::FileServer, Config};
 
 mod routes;
 use routes::init;

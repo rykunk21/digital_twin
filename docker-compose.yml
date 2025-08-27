@@ -2,11 +2,19 @@ services:
   surrealdb:
     image: surrealdb/surrealdb:latest
     container_name: surrealdb
-    command: start --log debug --user root --pass root --bind 0.0.0.0:8080
+    env_file:
+      - .env/.env.dev
+    environment:
+      SURREAL_USER: ${SURREAL_USER}
+      SURREAL_PASS: ${SURREAL_PASS}
+    command: start --log debug --user ${SURREAL_USER} --pass ${SURREAL_PASS} --bind 0.0.0.0:8080
     volumes:
       - app:/data
+    ports:
+      - "8080:8080"
     networks:
       - backend_network
+
 
   backend:
     build:
